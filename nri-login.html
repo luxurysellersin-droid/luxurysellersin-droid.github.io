@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Login</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f8; }
+        .navbar { position: sticky; top: 0; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08); z-index: 10; }
+        .nav-inner { max-width: 1100px; margin: 0 auto; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-logo a { text-decoration: none; font-weight: 700; color: #2c3e50; }
+        .nav-menu { display: flex; gap: 1rem; }
+        .nav-menu a { text-decoration: none; color: #2c3e50; font-weight: 600; }
+        .nav-menu a:hover { color: #667eea; }
+
+        .login-wrap { max-width: 900px; margin: 48px auto; padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .login-card { background: #fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 24px; }
+        .login-card h1 { margin: 0 0 8px 0; font-size: 1.75rem; color: #2c3e50; }
+        .login-card p { margin: 0 0 16px 0; color: #6b7280; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; color: #374151; font-weight: 600; }
+        input { width: 100%; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 1rem; }
+        input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+        .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .btn { display: inline-block; padding: 12px 18px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .btn-primary { background: #667eea; color: #fff; }
+        .btn-primary:hover { background: #5a60d6; }
+        .tips { background:#fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 24px; }
+        .tip { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; color: #374151; }
+        .tip i { color: #667eea; }
+        @media (max-width: 780px) { .login-wrap { grid-template-columns: 1fr; } }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const emailInput = document.getElementById('email');
+            const passwordRow = document.getElementById('password-row');
+            const otpRow = document.getElementById('otp-row');
+            const sendOtpBtn = document.getElementById('sendOtpBtn');
+            const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+            const otpInput = document.getElementById('otp');
+            const statusEl = document.getElementById('status');
+            const form = document.getElementById('loginForm');
+            const resendCountdownEl = document.getElementById('resendCountdown');
+
+            const RESEND_COOLDOWN_SEC = 30;
+            let lastSentAt = 0;
+            let countdownTimer = null;
+
+            const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
+            const saveOtp = (email, otp) => {
+                sessionStorage.setItem('demo_otp_email', email);
+                sessionStorage.setItem('demo_otp_code', otp);
+                sessionStorage.setItem('demo_otp_sent_at', String(Date.now()));
+            };
+            const readOtp = () => ({
+                email: sessionStorage.getItem('demo_otp_email') || '',
+                code: sessionStorage.getItem('demo_otp_code') || '',
+                sentAt: Number(sessionStorage.getItem('demo_otp_sent_at') || '0')
+            });
+
+            const setStatus = (msg, type = 'info') => {
+                statusEl.textContent = msg;
+                statusEl.style.color = type === 'error' ? '#b91c1c' : (type === 'success' ? '#15803d' : '#374151');
+            };
+
+            const startCooldown = () => {
+                lastSentAt = Date.now();
+                sendOtpBtn.disabled = true;
+                let remaining = RESEND_COOLDOWN_SEC;
+                resendCountdownEl.textContent = `Resend available in ${remaining}s`;
+                countdownTimer && clearInterval(countdownTimer);
+                countdownTimer = setInterval(() => {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(countdownTimer);
+                        resendCountdownEl.textContent = '';
+                        sendOtpBtn.disabled = false;
+                    } else {
+                        resendCountdownEl.textContent = `Resend available in ${remaining}s`;
+                    }
+                }, 1000);
+            };
+
+            sendOtpBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const email = emailInput.value.trim();
+                if (!email) {
+                    setStatus('Enter your email to receive an OTP.', 'error');
+                    emailInput.focus();
+                    return;
+                }
+                const otp = generateOtp();
+                saveOtp(email, otp);
+                passwordRow.style.display = 'none';
+                otpRow.style.display = 'block';
+                setStatus(`Demo mode: your OTP is ${otp}.`, 'info');
+                startCooldown();
+            });
+
+            verifyOtpBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const { email, code } = readOtp();
+                const inputCode = (otpInput.value || '').trim();
+                if (!inputCode) {
+                    setStatus('Enter the 6-digit OTP.', 'error');
+                    otpInput.focus();
+                    return;
+                }
+                if (inputCode === code && email && email === emailInput.value.trim()) {
+                    setStatus('Verified! Redirecting...', 'success');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+                } else {
+                    setStatus('Invalid OTP. Please try again or resend.', 'error');
+                }
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                setStatus('Use Send OTP, then enter the code to login.', 'info');
+            });
+        });
+    </script>
+  </head>
+  <body>
+    <nav class="navbar" aria-label="Primary">
+        <div class="nav-inner">
+            <div class="nav-logo"><a href="/">My Profile</a></div>
+            <div class="nav-menu">
+                <a href="/">Home</a>
+                <a href="portfolio.html#about">About</a>
+                <a href="portfolio.html#services">Services</a>
+                <a href="portfolio.html#projects">Projects</a>
+                <a href="portfolio.html#get-in-touch">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <div class="login-wrap">
+        <div class="login-card">
+            <h1>Client Login</h1>
+            <p>Access your project dashboard, timelines, and documents.</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" required>
+                </div>
+                <div id="password-row" class="form-group" style="display:none;">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password">
+                </div>
+                <div id="otp-row" class="form-group" style="display:none;">
+                    <label for="otp">Enter OTP</label>
+                    <input id="otp" name="otp" type="text" inputmode="numeric" pattern="\\d{6}" placeholder="6-digit code">
+                </div>
+                <div class="actions">
+                    <a class="btn" href="/">Back</a>
+                    <button id="sendOtpBtn" class="btn" type="button">Send OTP</button>
+                    <button id="verifyOtpBtn" class="btn btn-primary" type="button">Verify OTP</button>
+                </div>
+                <div id="resendCountdown" style="margin-top:8px; color:#6b7280;"></div>
+                <div id="status" style="margin-top:10px; font-weight:600;"></div>
+            </form>
+        </div>
+        <div class="tips">
+            <div class="tip"><i class="fas fa-check-circle"></i> Secure, private client area</div>
+            <div class="tip"><i class="fas fa-file-alt"></i> CAD reviews and progress reports</div>
+            <div class="tip"><i class="fas fa-clock"></i> On-time delivery tracking</div>
+        </div>
+    </div>
+  </body>
+ </html>
+
+

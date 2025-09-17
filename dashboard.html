@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Dashboard</title>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f6f7fb; }
+    .top { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.06); padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); padding: 20px; }
+    h1 { margin: 0; font-size: 1.4rem; color: #2c3e50; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+    .btn { text-decoration: none; padding: 10px 14px; border-radius: 10px; background: #667eea; color: #fff; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>Welcome, Client</h1>
+    <a class="btn" href="/">Back to Home</a>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card">
+        <h2 style="margin:0 0 8px 0; color:#2c3e50;">Project Status</h2>
+        <p style="color:#6b7280;">Your project timeline, milestones, and recent updates will appear here.</p>
+      </div>
+      <div class="card">
+        <h2 style="margin:0 0 8px 0; color:#2c3e50;">Documents</h2>
+        <p style="color:#6b7280;">CAD reviews, invoices, and files will be listed here.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+
+
